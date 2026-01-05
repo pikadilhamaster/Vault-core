@@ -1,0 +1,5 @@
+{
+  "name": "Vault core",
+  "description": "Uma plataforma de downloads minimalista, responsiva e de carregamento rápido, construída com React e Tailwind CSS.",
+  "requestFramePermissions": []
+}
