@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
-import { Send, X, Bot, Shield, Zap, Cpu, BookOpen, Sparkles, Loader2 } from 'lucide-react';
+import { Send, X, Bot, Shield, Zap, Cpu, BookOpen, Sparkles, Loader2, RefreshCcw } from 'lucide-react';
 
 type AIProtocol = 'DEFENSE' | 'OPERATION' | 'OPTIMIZATION';
 
@@ -11,7 +11,7 @@ export const AIChat: React.FC = () => {
   const [messages, setMessages] = useState<{role: 'user' | 'bot', text: string, protocol?: AIProtocol}[]>([
     { 
       role: 'bot', 
-      text: 'Sistemas Nexus Core Intelligence 7.0 inicializados. Protocolo de Operação ativo por padrão. Como posso auxiliar seu deploy hoje?',
+      text: 'Sistemas Nexus Core Intelligence v3 inicializados. Estou pronto para gerenciar sua segurança ou otimizar seus deploys. Qual protocolo deseja ativar?',
       protocol: 'OPERATION'
     }
   ]);
@@ -25,51 +25,36 @@ export const AIChat: React.FC = () => {
     }
   }, [messages, isLoading]);
 
-  const handleSendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+  const handleSendMessage = async (customPrompt?: string) => {
+    const textToUse = customPrompt || input;
+    if (!textToUse.trim() || isLoading) return;
 
-    const userText = input;
-    const currentProtocol = protocol;
-    setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: userText }]);
+    if (!customPrompt) setInput('');
+    setMessages(prev => [...prev, { role: 'user', text: textToUse }]);
     setIsLoading(true);
 
     try {
-      const apiKey = process.env.API_KEY;
-      if (!apiKey) {
-        throw new Error("Nexus Key não encontrada. Configure o ambiente.");
-      }
-
-      const ai = new GoogleGenAI({ apiKey });
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
-      const instructions = {
-        DEFENSE: "Você é o Protocolo de Defesa Nexus. Seu foco é segurança cibernética extrema, análise de vulnerabilidades, SHA-256 e forense digital. Use terminologia técnica pesada e tom de vigilância.",
-        OPERATION: "Você é o Protocolo de Operação Nexus. Seu foco é guiar o usuário em instalações, explicar compatibilidade de arquivos e facilitar o acesso aos binários do cofre.",
-        OPTIMIZATION: "Você é o Protocolo de Otimização Nexus. Seu foco é performance, tuning de sistema, redução de latência e eficiência de recursos. Dê dicas de 'power user'."
+      const protocolSystemInstructions = {
+        DEFENSE: "Você é o PROTOCOLO DE DEFESA. Foco em segurança máxima, criptografia, SHA-256 e análise de riscos. Seja formal e técnico.",
+        OPERATION: "Você é o PROTOCOLO DE OPERAÇÃO. Foco em guias passo a passo, instalação e compatibilidade de software. Seja útil e didático.",
+        OPTIMIZATION: "Você é o PROTOCOLO DE OTIMIZAÇÃO. Foco em velocidade, performance de hardware e economia de recursos. Seja direto e eficiente."
       };
 
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: userText,
+        contents: textToUse,
         config: {
-          systemInstruction: `Você é o NEXUS CORE, a inteligência central deste site de downloads técnicos.
-          Protocolo Ativo: ${instructions[currentProtocol]}
-          
-          Regras:
-          1. Responda em Português-BR.
-          2. Use Markdown para listas e negrito.
-          3. Seja conciso mas extremamente técnico.
-          4. Adicione um 'Log de Status' ao final de cada resposta.`,
+          systemInstruction: `${protocolSystemInstructions[protocol]} 
+          Responda sempre em Português-BR. Utilize formatação Markdown. 
+          Finalize com um código de status [OK-NEXUS-7].`,
         },
       });
 
-      setMessages(prev => [...prev, { role: 'bot', text: response.text || "Sem telemetria.", protocol: currentProtocol }]);
+      setMessages(prev => [...prev, { role: 'bot', text: response.text || "Sem resposta do núcleo.", protocol }]);
     } catch (error) {
-      console.error(error);
-      setMessages(prev => [...prev, { 
-        role: 'bot', 
-        text: "ERRO DE CONEXÃO: Não foi possível acessar o Nexus Central. Verifique se a API Key está configurada corretamente no ambiente de deploy." 
-      }]);
+      setMessages(prev => [...prev, { role: 'bot', text: "Erro na ponte neural. Verifique sua chave de acesso ou conexão." }]);
     } finally {
       setIsLoading(false);
     }
@@ -86,53 +71,48 @@ export const AIChat: React.FC = () => {
           <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-slate-900 animate-pulse"></div>
         </button>
       ) : (
-        <div className="bg-white w-[90vw] sm:w-[450px] h-[600px] rounded-[32px] shadow-2xl border technical-border flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
-          <div className="bg-slate-900 p-5 text-white flex justify-between items-center">
+        <div className="bg-white w-[90vw] sm:w-[420px] h-[650px] rounded-[40px] shadow-2xl border technical-border flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+          <div className="bg-slate-900 p-6 text-white flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-11 h-11 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
                  <Bot size={22} />
               </div>
               <div>
-                <h4 className="font-bold text-xs uppercase tracking-tighter">Nexus Core Intelligence</h4>
+                <h4 className="font-bold text-xs uppercase tracking-tight">Nexus Core Intelligence</h4>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-1 h-1 bg-emerald-500 rounded-full"></span>
-                  <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Sincronizado</span>
+                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                  <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Protocolo Ativo: {protocol}</span>
                 </div>
               </div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/10 rounded-lg">
-              <X size={18} className="text-slate-400" />
+            <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+              <X size={20} className="text-slate-400" />
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-0.5 p-1 bg-slate-100 border-b technical-border">
-             {(['DEFENSE', 'OPERATION', 'OPTIMIZATION'] as AIProtocol[]).map((p) => (
+          <div className="flex p-1.5 bg-slate-100 border-b technical-border gap-1">
+             {(['DEFENSE', 'OPERATION', 'OPTIMIZATION'] as AIProtocol[]).map(p => (
                <button 
-                 key={p}
-                 onClick={() => setProtocol(p)}
-                 className={`py-2 rounded-lg flex items-center justify-center gap-2 transition-all ${protocol === p ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                key={p}
+                onClick={() => setProtocol(p)}
+                className={`flex-1 py-3 rounded-xl flex flex-col items-center gap-1 transition-all ${protocol === p ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                >
-                  {p === 'DEFENSE' && <Shield size={12} />}
-                  {p === 'OPERATION' && <BookOpen size={12} />}
-                  {p === 'OPTIMIZATION' && <Zap size={12} />}
-                  <span className="text-[8px] font-black uppercase tracking-tighter">{p.slice(0, 3)}</span>
+                 {p === 'DEFENSE' && <Shield size={14} />}
+                 {p === 'OPERATION' && <BookOpen size={14} />}
+                 {p === 'OPTIMIZATION' && <Zap size={14} />}
+                 <span className="text-[7px] font-black uppercase tracking-tighter">{p.slice(0, 3)}</span>
                </button>
              ))}
           </div>
 
-          <div ref={scrollRef} className="flex-grow p-5 overflow-y-auto space-y-4 bg-slate-50 no-scrollbar">
+          <div ref={scrollRef} className="flex-grow p-6 overflow-y-auto space-y-6 bg-slate-50 no-scrollbar">
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-4 rounded-2xl text-[13px] leading-relaxed ${
+                <div className={`max-w-[85%] p-5 rounded-[24px] text-sm leading-relaxed ${
                   m.role === 'user' 
                     ? 'bg-blue-600 text-white font-semibold' 
-                    : 'bg-white text-slate-700 shadow-sm border technical-border'
+                    : 'bg-white text-slate-700 border border-slate-100 shadow-sm'
                 }`}>
-                  {m.role === 'bot' && m.protocol && (
-                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-50 opacity-50">
-                       <span className="text-[8px] font-black uppercase tracking-widest">{m.protocol} REPORT</span>
-                    </div>
-                  )}
                   {m.text}
                 </div>
               </div>
@@ -140,29 +120,29 @@ export const AIChat: React.FC = () => {
             {isLoading && (
               <div className="flex justify-start">
                 <div className="bg-white p-4 rounded-2xl border technical-border flex items-center gap-3">
-                  <Loader2 size={14} className="animate-spin text-blue-600" />
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Processando...</span>
+                  <Loader2 size={16} className="animate-spin text-blue-600" />
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Processando...</span>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="p-4 bg-white border-t technical-border">
-            <div className="flex gap-2 p-1.5 bg-slate-50 border technical-border rounded-xl">
+          <div className="p-5 bg-white border-t technical-border">
+            <div className="flex gap-2 p-1.5 bg-slate-50 border technical-border rounded-[20px] focus-within:border-blue-500 transition-all">
               <input 
                 type="text" 
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
-                placeholder="Comando Nexus..."
-                className="flex-grow text-xs bg-transparent border-none focus:ring-0 px-3 font-semibold"
+                placeholder={`Comando de ${protocol.toLowerCase()}...`}
+                className="flex-grow text-xs bg-transparent border-none focus:ring-0 px-3 font-semibold outline-none"
               />
               <button 
-                onClick={handleSendMessage}
+                onClick={() => handleSendMessage()}
                 disabled={!input.trim() || isLoading}
-                className="bg-slate-900 text-white p-2.5 rounded-lg hover:bg-blue-600 transition-all disabled:opacity-20"
+                className="bg-slate-900 text-white p-3 rounded-xl hover:bg-blue-600 transition-all disabled:opacity-20"
               >
-                <Send size={16} />
+                <Send size={18} />
               </button>
             </div>
           </div>
